@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -52,6 +53,12 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		mediaType = "application/octet-stream"
 	}
 
+	myMediaType, _, err := mime.ParseMediaType(mediaType)
+	if err != nil || (myMediaType != "image/jpeg" && myMediaType != "image/png") {
+		respondWithError(w, http.StatusBadRequest, "Thumbnail must be an image of type jpeg or png", err)
+		return
+	}
+
 	fileData := make([]byte, header.Size)
 	fileData, err = io.ReadAll(file)
 	if err != nil {
@@ -73,11 +80,6 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, videoID.String(), filepath.Ext(header.Filename))
-
-	//base64Image := base64.StdEncoding.EncodeToString(fileData)
-	//dataURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Image)
-
 	db_video, err := cfg.db.GetVideo(videoID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't GetVideo", err)
@@ -89,6 +91,8 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Set the URL for the thumbnail
+	dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, videoID.String(), filepath.Ext(header.Filename))
 	db_video.ThumbnailURL = &dataURL
 
 	err = cfg.db.UpdateVideo(db_video)
