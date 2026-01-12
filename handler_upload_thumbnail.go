@@ -1,10 +1,11 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/google/uuid"
@@ -58,8 +59,24 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	base64Image := base64.StdEncoding.EncodeToString(fileData)
-	dataURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Image)
+	myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", videoID.String(), filepath.Ext(header.Filename)))
+	myfile, err := os.Create(myFilepath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create thumbnail file", err)
+		return
+	}
+	defer myfile.Close()
+
+	_, err = myfile.Write(fileData)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't write thumbnail file", err)
+		return
+	}
+
+	dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, videoID.String(), filepath.Ext(header.Filename))
+
+	//base64Image := base64.StdEncoding.EncodeToString(fileData)
+	//dataURL := fmt.Sprintf("data:%s;base64,%s", mediaType, base64Image)
 
 	db_video, err := cfg.db.GetVideo(videoID)
 	if err != nil {
