@@ -89,16 +89,6 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	/*
-		// Create a 32-byte slice, fill it with cryptographically secure random data, encoded to base64 and use that as the filename
-		sliceByte := make([]byte, 32)
-		if _, err := rand.Read(sliceByte); err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Couldn't create cryptographically secure random data", err)
-			return
-		}
-		randomFilename := base64.RawURLEncoding.EncodeToString(sliceByte)
-	*/
-
 	randomFilename, err := helperReturn32RandomChars()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create random filename", err)
@@ -122,25 +112,7 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	/*
-		myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", randomFilename, filepath.Ext(header.Filename)))
-		myfile, err := os.Create(myFilepath)
-		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Couldn't create video file", err)
-			return
-		}
-		defer myfile.Close()
-
-		_, err = myfile.Write(fileData)
-		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Couldn't write video file", err)
-			return
-		}
-	*/
-
 	// Set the URL for the video
-	//dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, videoID.String(), filepath.Ext(header.Filename))
-	//dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, randomFilename, filepath.Ext(header.Filename))
 	dataURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, myS3Key)
 	db_video.VideoURL = &dataURL
 
