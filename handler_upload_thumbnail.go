@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -68,7 +66,7 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Create a 32-byte slice
+	/*// Create a 32-byte slice
 	sliceByte := make([]byte, 32)
 
 	// Fill it with cryptographically secure random data
@@ -78,10 +76,17 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Encode using base64 URL encoding without padding
-	randomString := base64.RawURLEncoding.EncodeToString(sliceByte)
+	randomString := base64.RawURLEncoding.EncodeToString(sliceByte)*/
+
+	randomFilename, err := helperReturn32RandomChars()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create random filename", err)
+		return
+	}
 
 	//myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", videoID.String(), filepath.Ext(header.Filename)))
-	myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", randomString, filepath.Ext(header.Filename)))
+	//myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", randomString, filepath.Ext(header.Filename)))
+	myFilepath := filepath.Join(cfg.assetsRoot, fmt.Sprintf("%s%s", randomFilename, filepath.Ext(header.Filename)))
 	myfile, err := os.Create(myFilepath)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create thumbnail file", err)
@@ -108,7 +113,8 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 
 	// Set the URL for the thumbnail
 	//dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, videoID.String(), filepath.Ext(header.Filename))
-	dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, randomString, filepath.Ext(header.Filename))
+	//dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, randomString, filepath.Ext(header.Filename))
+	dataURL := fmt.Sprintf("http://%s/assets/%s%s", r.Host, randomFilename, filepath.Ext(header.Filename))
 	db_video.ThumbnailURL = &dataURL
 
 	err = cfg.db.UpdateVideo(db_video)
