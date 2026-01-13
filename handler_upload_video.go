@@ -105,6 +105,21 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		prefix = "other"
 	}
 
+	// Process the video for fast start
+	myProcessedPath, err := processVideoForFastStart(myTempFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to retrieve file path for fast start", err)
+		return
+	}
+
+	myProcessedFile, err := os.Open(myProcessedPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't process video for fast start", err)
+		return
+	}
+	defer myProcessedFile.Close()
+	defer os.Remove(myProcessedPath)
+
 	randomFilename, err := helperReturn32RandomChars()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create random filename", err)
@@ -115,9 +130,10 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	myS3Key := fmt.Sprintf("%s/%s%s", prefix, randomFilename, filepath.Ext(header.Filename))
 
 	myPutObjectParams := s3.PutObjectInput{
-		Bucket:      &myS3Bucket,
-		Key:         &myS3Key,
-		Body:        myTempFile,
+		Bucket: &myS3Bucket,
+		Key:    &myS3Key,
+		//Body:        myTempFile,
+		Body:        myProcessedFile,
 		ContentType: &parsedMediaType,
 	}
 
@@ -131,6 +147,14 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	// Set the URL for the video
 	dataURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, myS3Key)
 	db_video.VideoURL = &dataURL
+
+	/*
+		// Delete the processed temp file
+		err = os.Remove(myProcessedPath)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Unable to delete processed temp file", err)
+			return
+		}*/
 
 	err = cfg.db.UpdateVideo(db_video)
 	if err != nil {
