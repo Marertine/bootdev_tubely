@@ -261,7 +261,9 @@ function viewVideo(video) {
     thumbnailImg.style.display = 'none';
   } else {
     thumbnailImg.style.display = 'block';
+    //thumbnailImg.src = `${video.thumbnail_url}?v=${Date.now()}`;
     thumbnailImg.src = video.thumbnail_url;
+    console.log(thumbnailImg.src);    
   }
 
   const videoPlayer = document.getElementById('video-player');
@@ -270,9 +272,10 @@ function viewVideo(video) {
       videoPlayer.style.display = 'none';
     } else {
       videoPlayer.style.display = 'block';
-      videoPlayer.src = video.video_url;
+      
+      
       videoPlayer.load();
-    }
+    } videoPlayer.src = video.video_url;
   }
 }
 
