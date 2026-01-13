@@ -89,6 +89,22 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	aspectRatio, err := getVideoAspectRatio(myTempFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to retrieve aspect ratio of video", err)
+		return
+	}
+
+	prefix := "other"
+	switch aspectRatio {
+	case "16:9":
+		prefix = "landscape"
+	case "9:16":
+		prefix = "portrait"
+	default:
+		prefix = "other"
+	}
+
 	randomFilename, err := helperReturn32RandomChars()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create random filename", err)
@@ -96,7 +112,7 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	}
 
 	myS3Bucket := cfg.s3Bucket
-	myS3Key := fmt.Sprintf("%s%s", randomFilename, filepath.Ext(header.Filename))
+	myS3Key := fmt.Sprintf("%s/%s%s", prefix, randomFilename, filepath.Ext(header.Filename))
 
 	myPutObjectParams := s3.PutObjectInput{
 		Bucket:      &myS3Bucket,

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+
+	//"fmt"
 	"os/exec"
 )
 
@@ -41,9 +43,11 @@ func getVideoAspectRatio(filepath string) (string, error) {
 	w := ffprobeResponse.Streams[0].Width
 	h := ffprobeResponse.Streams[0].Height
 
-	if w*9 == h*16 {
+	//fmt.Println("ffprobe width/height:", w, h)
+
+	if w == h*16/9 {
 		return "16:9", nil
-	} else if w*16 == h*9 {
+	} else if h == w*16/9 {
 		return "9:16", nil
 	} else {
 		return "other", nil
