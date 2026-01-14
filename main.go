@@ -28,6 +28,7 @@ type apiConfig struct {
 }
 
 func main() {
+	// This line is what allows environment constants to be pulled from the .env file
 	godotenv.Load(".env")
 
 	pathToDB := os.Getenv("DB_PATH")
